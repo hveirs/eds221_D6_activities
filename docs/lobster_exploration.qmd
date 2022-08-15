@@ -1,0 +1,106 @@
+---
+title: "D6 Activities"
+author: "Hailey Veirs"
+format: html
+editor: visual
+---
+
+
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(here)
+```
+
+## Note: mutate(x = ifelse(logical test)) 
+### Read and Find counts
+
+```{r}
+lobster_raw <- read_csv(
+  here("data", "Lobster_Abundance_All_Years_20210412.csv"), 
+  na = c("-99999", "")) |> 
+  clean_names() |> 
+  uncount(count)
+
+lobster_count <- lobster_raw |>
+  group_by(site, year) |> 
+  summarise(count = n(), 
+            mean_carapace_length = mean(size_mm, na.rm = TRUE))
+
+lobster_plot <- ggplot(lobster_count, 
+                       aes(x = year, y = count)) + 
+  geom_line(aes(color = site)) +
+  facet_wrap(~site)
+
+lobster_plot
+```
+
+### Find proportion of legal lobsters
+
+```{r}
+lobster_2020 <- lobster_raw |> 
+  filter(year == 2020)
+
+legal_lobster <- lobster_2020 |>
+  mutate(legal = ifelse(size_mm > 79.76, 
+                        yes = "yes", no = "no")) |>
+  group_by(site, legal) |> 
+  summarize(count = n())
+
+legal_lobster_plot <- ggplot(legal_lobster, 
+                             aes(x = site, y = count)) + 
+  geom_col(position = "fill", aes(fill = legal))
+
+legal_lobster_plot
+
+```
+
+## Task 3
+
+### filter() practice
+
+```{r}
+sites_I_C_N <- lobster_raw |> 
+  filter(site %in% c("IVEE", "CARP", "NAPL"))
+
+lob_august <- lobster_raw |> 
+  filter(month == 8)
+
+lob_or <- lobster_raw |>
+  filter(site == "AQUE" | size_mm > 70)
+
+lob_no_NAPL <- lobster_raw |>
+  filter(!site == "NAPL")
+```
+
+
+### group_by() practice
+
+```{r}
+lob_std_mean <- lobster_raw |> 
+  group_by(site) |>
+  summarize(mean_length = mean(size_mm, na.rm = TRUE), 
+            standard_dev = sd(size_mm, na.rm = TRUE))
+
+lob_month_site_max <- lobster_raw |> 
+  group_by(site, month) |> 
+  summarize(max_length = max(size_mm, na.rm = TRUE))
+```
+
+### mutate() practice
+
+
+```{r}
+lobster_size_cm <- lobster_raw |> 
+  mutate(carapace_length_cm = (size_mm / 10))
+
+lob_lower_site <- lobster_raw |> 
+  mutate(site = tolower(site))
+
+lob_area_string <- lobster_raw |>
+  mutate(area = as.character(area))
+
+class(lob_area_string$area)
+```
+
